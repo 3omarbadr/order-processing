@@ -33,10 +33,11 @@ services:
                 WWWGROUP: '${WWWGROUP}'
         image: sail-8.4/app
         restart: unless-stopped
-        command: php artisan queue:work --tries=3 --backoff=3 --max-time=3600
+        command: php artisan queue:work --verbose --tries=3 --backoff=3 --sleep=3 --max-time=0 --queue=default
         environment:
             WWWUSER: '${WWWUSER}'
             LARAVEL_SAIL: 1
+            QUEUE_CONNECTION: database
         volumes:
             - '.:/var/www/html'
         networks:
