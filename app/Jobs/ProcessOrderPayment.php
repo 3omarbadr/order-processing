@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Services\PaymentService;
 use Illuminate\Bus\Queueable;
@@ -9,6 +10,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class ProcessOrderPayment implements ShouldQueue
 {
@@ -33,5 +36,17 @@ class ProcessOrderPayment implements ShouldQueue
     {
         $order = Order::findOrFail($this->orderId);
         $paymentService->processPayment($order);
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        Log::error("Job failed for order {$this->orderId}: {$exception->getMessage()}");
+
+        $order = Order::find($this->orderId);
+
+        if ($order && $order->status !== OrderStatus::FAILED) {
+            $order->status = OrderStatus::FAILED;
+            $order->save();
+        }
     }
 }
